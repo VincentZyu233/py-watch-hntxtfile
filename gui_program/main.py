@@ -1,3 +1,16 @@
+import sys
+
+def get_resource_path(relative_path):
+    """
+    获取资源文件的绝对路径，兼容 PyInstaller 打包和开发环境。
+    """
+    try:
+        # PyInstaller creates a temporary folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 # 标准库
 import os
 import time
@@ -21,6 +34,9 @@ import win32process
 import win32clipboard
 import win32con
 
+
+
+
 CONFIG_JSON = {}
 DEFAULT_CONFIG = {
     "target_txt_path": r"G:\GGames\Minecraft\shuyeyun\qq-bot\miao-qinghuitou\恒行5挂机软件\OpenCode\HN5FC.txt",
@@ -30,7 +46,8 @@ DEFAULT_CONFIG = {
     "prefix_text": "推送hn300信息",
     "enable_tag": True,
     "tag_style": "空心36_③⑥",
-    "show_span_sum": False
+    "show_span_sum": False,
+    "img_server_url": "http://101.132.131.209:6712"
 }
 
 CONFIG_FILE = "./config.yaml"
@@ -151,7 +168,7 @@ def download_image_to_clipboard(url):
     win32clipboard.SetClipboardData(win32con.CF_DIB, data)
     win32clipboard.CloseClipboard()
 
-def send_message_and_images(log_func=None, code_from_txt=None):
+def send_message_and_images(log_func=None, code_from_txt=None, img_server_url="http://101.132.131.209:6712"):
     # hwnds = find_windows_by_exe_path(TARGET_EXE_PATH)
     hwnds = find_windows_by_exe_path( CONFIG_JSON.get("oldqq_exe_path", "") )
     if not hwnds:
@@ -204,11 +221,9 @@ def send_message_and_images(log_func=None, code_from_txt=None):
 
     time.sleep(0.9)
 
-    for img_url in [
-        "http://101.132.131.209:6712/zhongying",
-        "http://101.132.131.209:6712/yintianxia",
-    ]:
-        if log_func: log_func(f"发送图片: {img_url}")
+    for img_path in ["zhongying", "yintianxia"]:
+        img_url = f"{img_server_url}/{img_path}"
+        if log_func: log_func(f"粘贴图片: {img_url}")
         download_image_to_clipboard(img_url)
         time.sleep(0.3)
         pyautogui.hotkey('ctrl', 'v')
@@ -216,6 +231,7 @@ def send_message_and_images(log_func=None, code_from_txt=None):
         # pyautogui.click(click_sendbtn_x, click_sendbtn_y)
         # time.sleep(0.3)
     
+    if log_func: log_func(f"发送两张图")
     pyautogui.click(click_sendbtn_x, click_sendbtn_y)
     time.sleep(0.3)
 
@@ -231,7 +247,8 @@ class FileWatcherApp:
             "prefix_text": self.prefix_text_var.get().strip(),
             "enable_tag": self.enable_tag_var.get(),
             "tag_style": self.tag_style_var.get(),
-            "show_span_sum": self.show_span_sum_var.get()
+            "show_span_sum": self.show_span_sum_var.get(),
+            "img_server_url": self.img_server_url_var.get().strip(),
         }
 
     def __init__(self, root):
@@ -283,6 +300,15 @@ class FileWatcherApp:
 
         self.show_span_sum_var = tk.BooleanVar(value=False)
         tk.Checkbutton(param_frame, text="显示 跨 / 和", variable=self.show_span_sum_var).grid(row=3, column=0, sticky='w', pady=(2, 0))
+
+        # 增加图片服务器地址配置输入框
+        tk.Label(param_frame, text="图片服务器地址:").grid(row=4, column=0, sticky='w')
+        self.img_server_url_var = tk.StringVar(value=CONFIG_JSON.get("img_server_url", "http://101.132.131.209:6712"))
+        tk.Entry(param_frame, textvariable=self.img_server_url_var, width=40).grid(row=4, column=1, columnspan=2, sticky='we', pady=2)
+
+        # 在图片服务器地址输入框下方添加说明文字
+        tk.Label(param_frame, text="格式是 http(s)://ip:port，末尾没有斜杠", fg="red").grid(row=5, column=0, columnspan=3, sticky='w')
+
 
         # 操作按钮区
         btn_frame = tk.Frame(root)
@@ -361,9 +387,10 @@ class FileWatcherApp:
         if not enable_send:
             self.log("发送已禁用，仅输出日志")
             return
-
+        
+        img_server_url = self.img_server_url_var.get().strip()
         def do_send():
-            send_message_and_images(self.log, code_from_txt=extracted)
+            send_message_and_images(self.log, code_from_txt=extracted, img_server_url=img_server_url)
 
         threading.Thread(target=do_send, daemon=True).start()
 
@@ -379,6 +406,14 @@ if __name__ == "__main__":
 
     app.running = True
     threading.Thread(target=app.watch_file, daemon=True).start()
+
+    icon_img_path = get_resource_path("assets/logo.png")
+    try:
+        icon_img = tk.PhotoImage(file=icon_img_path)
+        root.iconphoto(True, icon_img)
+    except tk.TclError as e:
+        app.log(f"加载 logo 失败: {e}. 请确保 assets/logo.png 文件存在。")
+        # 可以选择设置一个默认图标或者不设置
 
     root.protocol("WM_DELETE_WINDOW", lambda: (save_config(app.get_current_config()), app.stop(), root.destroy()))
     root.mainloop()
