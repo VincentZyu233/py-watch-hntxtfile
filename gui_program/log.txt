@@ -1,0 +1,67 @@
+
+[INFO] Preparing to start...
+[INFO] Emulated terminal mode is active. You can directly input content in the terminal and use Ctrl, Tab, and other function keys.
+Lagrange.OneBot Version: 0.0.3+bc378320b4225d55a9960c3c6e15d204b6c7fca0
+
+warn: Lagrange.OneBot.Utility.MusicSigner[0]
+      MusicSignServer is not available, sign may be failed
+
+
+info: Lagrange.OneBot.Core.Login.LoginService[0]
+      Protocol Version: 3.2.15-30366
+info: Lagrange.Core.BotContext[0]
+      [2025-07-18 18:31:09] [WtExchangeLogic] [INFORMATION]: Connecting Servers...
+info: Lagrange.Core.BotContext[0]
+      [2025-07-18 18:31:09] [SocketContext] [VERBOSE]: Server: http://36.155.187.71:8080/ Latency: 23
+info: Lagrange.Core.BotContext[0]
+      [2025-07-18 18:31:09] [SocketContext] [VERBOSE]: Server: http://36.155.205.252:8080/ Latency: 25
+info: Lagrange.Core.BotContext[0]
+      [2025-07-18 18:31:09] [SocketContext] [VERBOSE]: Server: http://36.155.213.142:8080/ Latency: 26
+info: Lagrange.Core.BotContext[0]
+      [2025-07-18 18:31:09] [SocketContext] [VERBOSE]: Server: http://36.155.205.230:8080/ Latency: 24
+warn: Lagrange.Core.BotContext[0]
+      [2025-07-18 18:32:49] [BusinessContext] [WARNING]: Error when processing the event: Lagrange.Core.Internal.Event.Login.TransEmpEvent
+warn: Lagrange.Core.BotContext[0]
+      [2025-07-18 18:32:49] [BusinessContext] [WARNING]: System.Threading.Tasks.TaskCanceledException: The request was canceled due to the configured HttpClient.Timeout of 100 seconds elapsing.
+       ---> System.TimeoutException: The operation was canceled.
+       ---> System.Threading.Tasks.TaskCanceledException: The operation was canceled.
+       ---> System.IO.IOException: Unable to read data from the transport connection: Software caused connection abort.
+       ---> System.Net.Sockets.SocketException (103): Software caused connection abort
+         at System.Net.Sockets.NetworkStream.Read(Span`1 buffer)
+         --- End of inner exception stack trace ---
+         at System.Net.Sockets.NetworkStream.Read(Span`1 buffer)
+         at System.Net.Security.SyncReadWriteAdapter.ReadAsync(Stream stream, Memory`1 buffer, CancellationToken cancellationToken)
+         at System.Net.Security.SslStream.EnsureFullTlsFrameAsync[TIOAdapter](CancellationToken cancellationToken, Int32 estimatedSize)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at System.Net.Security.SslStream.ReadAsyncInternal[TIOAdapter](Memory`1 buffer, CancellationToken cancellationToken)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at System.Net.Security.SslStream.Read(Span`1 buffer)
+         at System.Net.Http.HttpConnection.InitialFillAsync(Boolean async)
+         at System.Net.Http.HttpConnection.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+         --- End of inner exception stack trace ---
+         at System.Net.Http.HttpConnection.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+         at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+         at System.Net.Http.HttpMessageHandlerStage.Send(HttpRequestMessage request, CancellationToken cancellationToken)
+         at System.Net.Http.Metrics.MetricsHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+         at System.Net.Http.HttpMessageHandlerStage.Send(HttpRequestMessage request, CancellationToken cancellationToken)
+         at System.Net.Http.DiagnosticsHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+         at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+         at System.Net.Http.HttpMessageHandlerStage.Send(HttpRequestMessage request, CancellationToken cancellationToken)
+         at System.Net.Http.SocketsHttpHandler.Send(HttpRequestMessage request, CancellationToken cancellationToken)
+         at System.Net.Http.HttpClient.Send(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken)
+         --- End of inner exception stack trace ---
+         --- End of inner exception stack trace ---
+         at System.Net.Http.HttpClient.HandleFailure(Exception e, Boolean telemetryStarted, HttpResponseMessage response, CancellationTokenSource cts, CancellationToken cancellationToken, CancellationTokenSource pendingRequestsCts)
+         at System.Net.Http.HttpClient.Send(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken)
+         at System.Net.Http.HttpClient.Send(HttpRequestMessage request)
+         at Lagrange.OneBot.Utility.OneBotSigner.Sign(String cmd, UInt32 seq, Byte[] body, Byte[]& e, String& t)
+         at Lagrange.Core.Internal.Packets.SsoPacker.Build(SsoPacket packet, BotAppInfo appInfo, BotDeviceInfo device, BotKeystore keystore, SignProvider signProvider)
+         at Lagrange.Core.Internal.Context.PacketContext.SendPacket(SsoPacket packet)
+         at Lagrange.Core.Internal.Context.BusinessContext.SendEvent(ProtocolEvent event)
+Unhandled exception. System.Exception: All login failed!
+   at Lagrange.OneBot.Core.Login.LoginService.StartAsync(CancellationToken token)
+   at Microsoft.Extensions.Hosting.Internal.Host.StartAsync(CancellationToken cancellationToken)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.RunAsync(IHost host, CancellationToken token)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.RunAsync(IHost host, CancellationToken token)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.Run(IHost host)
+   at Lagrange.OneBot.Program.Main(String[] args)

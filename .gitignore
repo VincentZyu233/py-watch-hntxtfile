@@ -1,5 +1,32 @@
-*/venv/
-*/__pycache__/
-
-venv/
+# Python相关忽略
 __pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境文件夹
+venv/
+env/
+ENV/
+
+# PyInstaller打包相关文件夹和文件
+build/
+dist/
+*.spec
+
+# 配置文件（如果你不想提交config.yaml，也加上）
+# 但一般配置文件可以提交，自己根据需要决定
+# config.yaml
+
+# 编辑器和IDE相关
+.vscode/
+.idea/
+*.swp
+*.swo
+*.DS_Store
+
+# 日志文件
+*.log
+
+# Windows系统文件
+Thumbs.db
+desktop.ini
