@@ -1,9 +1,11 @@
-code_count: 2323
+code_count: 14
 enable_send: true
 enable_tag: true
 img_server_url: http://101.132.131.209:6712
 oldqq_exe_path: E:\SSoftwareFiles\QQOld\Bin\QQ.exe
-prefix_text: 推送hn300信息123
-show_span_sum: false
+prefix_text: 推送hn300信息
+qq_window_titles: 开发测试2-hn300,开发测试1-hn300
+show_span_sum: true
+span_sum_use_circle_style: false
 tag_style: 空心36_③⑥
 target_txt_path: G:\GGames\Minecraft\shuyeyun\qq-bot\miao-qinghuitou\恒行5挂机软件\OpenCode\HN5FC.txt
