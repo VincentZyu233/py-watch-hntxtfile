@@ -14,6 +14,7 @@ def get_resource_path(relative_path):
 # 标准库
 import os
 import time
+from enum import Enum
 import threading
 from collections import Counter
 from io import BytesIO
@@ -132,43 +133,83 @@ def get_tag(code, enable_tag, tag_style):
 def convert_digit_to_tag(digit, style):
     return DIGIT_STYLE_MAP.get(style, {}).get(str(digit), str(digit))
 
-def extract_codes(path, count, enable_tag, tag_style, show_span_sum, span_sum_use_circle_style ):
-    first_line = ""
+class FileFormat(Enum):
+    """
+    定义两种文件格式。
+    HENGHANG: 期号带连字符的格式 (e.g., 250719-164 99016)
+    XINHANG: 期号不带连字符的格式 (e.g., 2502090581 21929)
+    """
+    HENGHANG = "HENGHANG"
+    XINHANG = "XINHANG"
+
+
+def extract_codes(log_func, path, count, enable_tag, tag_style, show_span_sum, span_sum_use_circle_style):
+    first_line_content = ""
     lines = []
     all_digits = []
-    with open(path, 'r', encoding='utf-8') as f:
-        for i, line in enumerate(f):
-            if i == 0:
-                first_line = line
-            if i >= count:
-                break
-            parts = line.strip().split()
-            if len(parts) == 2 and '-' in parts[0]:
-                period = parts[0].split('-')[1].zfill(3)
-                code = parts[1].zfill(5)
-                # tag = '③' if len(set(code[-3:])) < 3 else '⑥'
-                tag = get_tag(code, enable_tag, tag_style)
-                span_sum_text = ""
-                if show_span_sum:
-                    digits = [int(d) for d in code]
-                    span = max(digits) - min(digits)
-                    total = sum(digits)
-                    # span_sum = f" 跨{span} 和{total}"
-                    if span_sum_use_circle_style:
-                        # 转换跨度
-                        converted_span = CIRCLED_NUMBE_MAP_1_TO_50[span]
-                        # 转换和值
-                        converted_total = CIRCLED_NUMBE_MAP_1_TO_50[total]
-                        span_sum_text = f" 跨{converted_span} 和{converted_total}"
-                    else:
-                        span_sum_text = f" 跨{span} 和{total}"
-                lines.append(f"{period} 【{code}】{tag} {span_sum_text}")
 
-                all_digits.extend(list(code))  # 收集每个数字用于统计
-    # reverse 一下            
+    # Add a check for file existence at the very beginning of extract_codes
+    if not os.path.exists(path):
+        if log_func:
+            log_func(f"❌ 错误：txt 文件路径不存在：{path}")
+        return "", ""
+
+    with open(path, 'r', encoding='utf-8') as f:
+        # 1. 读取第一行内容，不再用于判断格式
+        try:
+            first_line_content = f.readline().strip()
+            # Reset file pointer to the beginning to read all lines
+            f.seek(0)
+        except Exception as e:
+            if log_func:
+                log_func(f"Error reading first line: {e}")
+            return "", ""
+
+        # 2. 遍历文件读取行数据
+        for i, line in enumerate(f):
+            # If we've processed the desired number of lines (plus the first line), break
+            if i > count:
+                break
+            
+            # Skip empty lines
+            stripped_line = line.strip()
+            if not stripped_line:
+                continue
+
+            parts = stripped_line.split()
+            if len(parts) != 2:
+                if log_func:
+                    log_func(f"Warning: Skipped malformed line (expected 2 parts, got {len(parts)}): {stripped_line}")
+                continue
+
+            period_raw = parts[0]
+            code = parts[1].zfill(5) # Ensure code is 5 digits
+
+            # Extract the last three digits for the period
+            period = period_raw[-3:]
+
+            # Process tag and span_sum (this logic remains consistent)
+            tag = get_tag(code, enable_tag, tag_style)
+            span_sum_text = ""
+            if show_span_sum:
+                digits = [int(d) for d in code]
+                span = max(digits) - min(digits)
+                total = sum(digits)
+
+                if span_sum_use_circle_style:
+                    converted_span = CIRCLED_NUMBE_MAP_1_TO_50.get(span, str(span))
+                    converted_total = CIRCLED_NUMBE_MAP_1_TO_50.get(total, str(total))
+                    span_sum_text = f" 跨{converted_span} 和{converted_total}"
+                else:
+                    span_sum_text = f" 跨{span} 和{total}"
+
+            lines.append(f"{period} 【{code}】{tag} {span_sum_text}")
+            all_digits.extend(list(code)) # Collect each digit for statistics
+
+    # Reverse the lines
     lines = lines[::-1]
 
-    # 统计数字频率
+    # Calculate digit frequency (this logic remains consistent)
     digit_freq = Counter(all_digits)
     sorted_digits = digit_freq.most_common()
 
@@ -183,9 +224,7 @@ def extract_codes(path, count, enable_tag, tag_style, show_span_sum, span_sum_us
     stat_text += "----------------"
 
     final_text = "\n".join(lines) + "\n" + stat_text
-    # print(f"[debug] final_code_text = {final_text}")
-    return final_text, first_line
-
+    return final_text, first_line_content # Return the content of the first line
 
 def download_image_to_clipboard(url):
     response = requests.get(url)
@@ -200,6 +239,7 @@ def download_image_to_clipboard(url):
     win32clipboard.EmptyClipboard()
     win32clipboard.SetClipboardData(win32con.CF_DIB, data)
     win32clipboard.CloseClipboard()
+
 
 def send_message_and_images(log_func, code_from_txt, exe_path, target_titles, img_server_url):
     title_list = [t.strip() for t in target_titles.split(",") if t.strip()]
@@ -317,7 +357,7 @@ class FileWatcherApp:
         # style.theme_use('vista')  # 可选 'clam'、'alt'、'default'、'vista'、'xpnative'
 
         self.root = root
-        self.root.title("[20250719v2][VincentZyu]监控txt文件+发送QQ")
+        self.root.title("[20250720v3][VincentZyu]监控txt文件+发送QQ")
 
         self.last_mtime = None  # 这里初始化
         
@@ -439,6 +479,14 @@ class FileWatcherApp:
         qq_exe_path = self.qq_exe_path_var.get()
         file_path = self.target_txt_path_var.get()
 
+        # Add checks for file and exe paths before proceeding
+        if not os.path.exists(qq_exe_path):
+            self.log(f"❌ QQ 可执行文件路径不存在：{qq_exe_path}，请检查。")
+            return
+        if not os.path.exists(file_path):
+            self.log(f"❌ txt 文件路径不存在：{file_path}，请检查。")
+            return
+
         target_titles = self.qq_window_titles_var.get()
         code_count = int(self.code_count_var.get())
         enable_send = self.enable_send_var.get()
@@ -448,7 +496,7 @@ class FileWatcherApp:
         show_span_sum = self.show_span_sum_var.get()
         span_sum_use_circle_style = self.span_sum_use_circle_style_var.get()
 
-        extracted, latest_code = extract_codes(file_path, code_count, enable_tag, tag_style, show_span_sum, span_sum_use_circle_style)
+        extracted, latest_code = extract_codes(self.log, file_path, code_count, enable_tag, tag_style, show_span_sum, span_sum_use_circle_style)
         if prefix_text:
             extracted = prefix_text + "\n" + extracted
 
@@ -479,7 +527,7 @@ if __name__ == "__main__":
     app.running = True
     threading.Thread(target=app.watch_file, daemon=True).start()
 
-    icon_img_path = get_resource_path("assets/logo.png")
+    icon_img_path = get_resource_path("assets\\logo.png")
     try:
         icon_img = tk.PhotoImage(file=icon_img_path)
         root.iconphoto(True, icon_img)

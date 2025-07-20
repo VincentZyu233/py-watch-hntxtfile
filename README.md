@@ -53,10 +53,8 @@ pip freeze > requirements.txt
 ```bash
 ./venv/Scripts/Activate # Powershell
 ./venv/bin/activate # Linux bash
-pyinstaller --onefile --windowed --icon=assets/logo.ico --name=自定义名称 main.py
-pyinstaller --onefile --windowed --icon=assets/logo.ico --add-data "assets/logo.png;assets" --name=检测txt变化发旧版qq河内五分彩_20250718v2 main.py
-pyinstaller --onefile --windowed --icon=assets/logo.ico --add-data "assets/logo.png;assets" --name=20250719v1_检测txt变化发旧版qq河内五分彩 main.py
-pyinstaller --onefile --windowed --icon=assets/logo.ico --add-data "assets/logo.png;assets" --name=20250719v2_检测txt变化发旧版qq河内五分彩 main.py
+cd gui_program
+pyinstaller --onefile --windowed --icon=assets/logo.ico --add-data "assets/logo.png;assets" --name=20250720v3_检测txt变化发旧版qq河内五分彩 main.py
 ```
 
 ## 作者
