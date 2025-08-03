@@ -16,27 +16,17 @@
 
 ## 使用方法
 
-1.  安装依赖：
-    ```bash
-    pip install -r requirements.txt
-    ```
-    (你需要创建一个 requirements.txt 文件，包含所需的第三方库，例如 `PyYAML`, `tkinter`, `Pillow`, `requests`, `psutil`, `pyautogui`, `pywin32`)
-2.  运行 `main.py`。
-3.  在 GUI 界面中配置相关参数，包括：
+1.  运行exe
+2.  在 GUI 界面中配置相关参数，包括：
     *   QQ 可执行文件路径
     *   目标 txt 文件路径
     *   发送行数
     *   是否启用发送
     *   消息前缀
     *   是否添加尾部 tag 及 tag 样式
-4.  程序会自动监控文件变化并发送消息。
+3.  程序会自动监控文件变化并发送消息。
 
-## 注意事项
 
-*   请确保已安装所有必要的 Python 库。
-*   请正确配置 QQ 可执行文件路径和目标 txt 文件路径。
-*   本工具基于 `pyautogui` 库模拟鼠标键盘操作，请确保电脑上已安装并配置好相关环境。
-*   程序会将配置保存到 `config.yaml` 文件中，下次启动时自动加载。
 
 ## 开发
 
@@ -44,19 +34,10 @@
 ```bash
 python -m venv venv
 pip freeze > requirements.txt
-```
-
-### 打包
-
-本项目使用 `PyInstaller` 打包成独立可执行文件：
-
-```bash
 ./venv/Scripts/Activate # Powershell
 ./venv/bin/activate # Linux bash
-cd gui_program
-pyinstaller --onefile --windowed --icon=assets/logo.ico --add-data "assets/logo.png;assets" --name=20250722v4_检测txt变化发旧版qq河内五分彩 main.py
+cd gui
+python main.py
+pyinstaller --onefile --windowed --icon=assets/logo.ico --add-data "assets/logo.png;assets" --name=20250804v5_watch_hntxtfile main.py
 ```
 
-## 作者
-
-VincentZyu

@@ -1,5 +1,8 @@
-code_count: 14
+count_hot_warm_cold: 30
+count_text_entries: 14
 enable_send: true
+enable_send_images: true
+enable_send_text: true
 enable_tag: true
 img_server_url: http://101.132.131.209:6712
 oldqq_exe_path: E:\SSoftwareFiles\QQOld\Bin\QQ.exe
@@ -8,4 +11,4 @@ qq_window_titles: 开发测试1-hn300,开发测试2-hn300
 show_span_sum: false
 span_sum_use_circle_style: false
 tag_style: 空心36_③⑥
-target_txt_path: G:\GGames\Minecraft\shuyeyun\qq-bot\miao-qinghuitou\新航挂机\新航挂机软件\OpenCode\249.txt
+target_txt_path: G:\GGames\Minecraft\shuyeyun\qq-bot\miao-qinghuitou\恒行5挂机软件\OpenCode\HN5FC.txt
