@@ -39,9 +39,6 @@ import win32process
 import win32clipboard
 import win32con
 
-
-
-
 CONFIG_JSON = {}
 DEFAULT_CONFIG = {
     "target_txt_path": r"G:\GGames\Minecraft\shuyeyun\qq-bot\miao-qinghuitou\恒行5挂机软件\OpenCode\HN5FC.txt",
@@ -54,7 +51,9 @@ DEFAULT_CONFIG = {
     "tag_style": "空心36_③⑥",
     "show_span_sum": False,
     "span_sum_use_circle_style": False,
-    "img_server_url": "http://101.132.131.209:6712"
+    "img_server_url": "http://101.132.131.209:6712",
+    "enable_send_text": True,
+    "enable_send_images": True 
 }
 
 CONFIG_FILE = "./config.yaml"
@@ -241,7 +240,15 @@ def download_image_to_clipboard(url):
     win32clipboard.CloseClipboard()
 
 
-def send_message_and_images(log_func, code_from_txt, exe_path, target_titles, img_server_url):
+def send_message_and_images(
+        log_func, 
+        code_from_txt, 
+        exe_path, 
+        target_titles, 
+        img_server_url,
+        enable_send_text, 
+        enable_send_images
+    ):
     title_list = [t.strip() for t in target_titles.split(",") if t.strip()]
     matched_windows = []
 
@@ -278,6 +285,20 @@ def send_message_and_images(log_func, code_from_txt, exe_path, target_titles, im
     for title, hwnd in matched_windows:
         if log_func: log_func(f"✅ 开始向窗口「{title}」发送消息...")
 
+        # 1. 保存窗口当前状态
+        # 获取窗口信息，判断是否最小化
+        window_placement = win32gui.GetWindowPlacement(hwnd)
+        # window_placement[1] 是显示状态 (SW_SHOWNORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED)
+        was_minimized = (window_placement[1] == win32con.SW_SHOWMINIMIZED)
+        
+        # 2. 强制置顶并还原窗口
+        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE) # 还原窗口（如果最小化）
+        win32gui.SetForegroundWindow(hwnd) # 将窗口置于前台
+        # 这一行是关键，确保窗口在所有其他窗口之上，可以被 pyautogui 看到和操作
+        win32gui.BringWindowToTop(hwnd) # 确保窗口在 Z 序的顶部
+        time.sleep(0.3) # 给予窗口足够的还原和置顶时间
+
+        # 3. 计算新的窗口坐标并移动 (保持不变)
         # 获取窗口当前的尺寸和位置
         left, top, right, bottom = win32gui.GetWindowRect(hwnd)
         current_w = right - left
@@ -291,7 +312,7 @@ def send_message_and_images(log_func, code_from_txt, exe_path, target_titles, im
         win32gui.MoveWindow(hwnd, new_x, new_y, current_w, current_h, True)
         time.sleep(0.2) # 给予窗口移动和渲染的时间
 
-        # 更新下一个窗口的偏移量
+        # 4. 更新下一个窗口的偏移量
         offset_x += increment_x
         offset_y += increment_y
 
@@ -302,37 +323,49 @@ def send_message_and_images(log_func, code_from_txt, exe_path, target_titles, im
         click_sendbtn_x = new_x + sendbtn_rel[0]
         click_sendbtn_y = new_y + sendbtn_rel[1]
 
-        # 输入文本内容
-        if log_func: log_func(f"向「{title}」粘贴txt文本")
-        win32gui.SetForegroundWindow(hwnd) # 将当前窗口置于前台
-        time.sleep(0.2) # 等待窗口完全激活
-        pyautogui.click(click_textbox_x, click_textbox_y)
-        time.sleep(0.1)
-        win32clipboard.OpenClipboard()
-        win32clipboard.EmptyClipboard()
-        win32clipboard.SetClipboardData(win32con.CF_UNICODETEXT, code_from_txt)
-        win32clipboard.CloseClipboard()
-        pyautogui.hotkey('ctrl', 'v')
-        time.sleep(0.1)
-        # pyautogui.click(click_sendbtn_x, click_sendbtn_y)
-        pyautogui.hotkey('ctrl', 'enter')
-        time.sleep(0.1)
-
-        
-        win32gui.SetForegroundWindow(hwnd) # 将当前窗口置于前台
-        time.sleep(0.2) # 等待窗口完全激活
-        # 发送图片
-        for img_path in ["zhongying", "yintianxia"]:
-            img_url = f"{img_server_url}/{img_path}"
-            if log_func: log_func(f"向「{title}」粘贴图片: {img_url}")
-            download_image_to_clipboard(img_url)
-            time.sleep(0.3)
+        # 5. 输入文本内容
+        if enable_send_text:
+            if log_func: log_func(f"向「{title}」粘贴txt文本")
+            win32gui.SetForegroundWindow(hwnd) # 将当前窗口置于前台
+            time.sleep(0.2) # 等待窗口完全激活
+            pyautogui.click(click_textbox_x, click_textbox_y)
+            time.sleep(0.1)
+            win32clipboard.OpenClipboard()
+            win32clipboard.EmptyClipboard()
+            win32clipboard.SetClipboardData(win32con.CF_UNICODETEXT, code_from_txt)
+            win32clipboard.CloseClipboard()
             pyautogui.hotkey('ctrl', 'v')
-            time.sleep(0.5)
-        
-        # pyautogui.click(click_sendbtn_x, click_sendbtn_y)
-        pyautogui.hotkey('ctrl', 'enter')
-        time.sleep(0.3)
+            time.sleep(0.1)
+            # pyautogui.click(click_sendbtn_x, click_sendbtn_y)
+            pyautogui.hotkey('ctrl', 'enter')
+            time.sleep(0.1)
+        else:
+            if log_func: log_func(f"🚫 已禁用向「{title}」发送文字。")
+
+        # 6. 发送图片 
+        if enable_send_images:
+            win32gui.SetForegroundWindow(hwnd) # 将当前窗口置于前台
+            time.sleep(0.2) # 等待窗口完全激活
+            # 发送图片
+            for img_path in ["zhongying", "yintianxia"]:
+                img_url = f"{img_server_url}/{img_path}"
+                if log_func: log_func(f"向「{title}」粘贴图片: {img_url}")
+                download_image_to_clipboard(img_url)
+                time.sleep(0.3)
+                pyautogui.hotkey('ctrl', 'v')
+                time.sleep(0.5)
+            
+            # pyautogui.click(click_sendbtn_x, click_sendbtn_y)
+            pyautogui.hotkey('ctrl', 'enter')
+            time.sleep(0.1)
+        else:
+            if log_func: log_func(f"🚫 已禁用向「{title}」发送图片。")
+
+        # 7. 恢复窗口原始状态 (如果之前是最小化的，则最小化回去)
+        if was_minimized:
+            if log_func: log_func(f"将窗口「{title}」重新最小化。")
+            win32gui.ShowWindow(hwnd, win32con.SW_MINIMIZE)
+            time.sleep(0.2) # 给予时间让窗口最小化
 
 
 
@@ -350,14 +383,14 @@ class FileWatcherApp:
             "show_span_sum": self.show_span_sum_var.get(),
             "span_sum_use_circle_style": self.span_sum_use_circle_style_var.get(),
             "img_server_url": self.img_server_url_var.get().strip(),
+            "enable_send_text": self.enable_send_text_var.get(),
+            "enable_send_images": self.enable_send_images_var.get(),
         }
 
     def __init__(self, root):
-        # style = ttk.Style()
-        # style.theme_use('vista')  # 可选 'clam'、'alt'、'default'、'vista'、'xpnative'
 
         self.root = root
-        self.root.title("[20250720v3][VincentZyu]监控txt文件+发送QQ")
+        self.root.title("[20250722v4][VincentZyu]监控txt文件+发送QQ")
 
         self.last_mtime = None  # 这里初始化
         
@@ -421,16 +454,31 @@ class FileWatcherApp:
         # 在图片服务器地址输入框下方添加说明文字
         tk.Label(param_frame, text="格式是 http(s)://ip:port，末尾没有斜杠", fg="red").grid(row=6, column=0, columnspan=3, sticky='w')
 
+        self.enable_send_text_var = tk.BooleanVar(value=CONFIG_JSON.get("enable_send_text", True)) # Default to True
+        self.enable_send_images_var = tk.BooleanVar(value=CONFIG_JSON.get("enable_send_images", True)) # Default to True
+
+        self.enable_send_text_checkbox = ttk.Checkbutton(param_frame, text="是否发送文字", variable=self.enable_send_text_var)
+        self.enable_send_text_checkbox.grid(row=7, column=0, sticky='w', pady=(5, 0)) # Adjust row number as needed
+
+        self.enable_send_images_checkbox = ttk.Checkbutton(param_frame, text="是否发送图片", variable=self.enable_send_images_var)
+        self.enable_send_images_checkbox.grid(row=7, column=1, sticky='w', pady=(5, 0), columnspan=2) # Adjust row and column as needed
+
 
         # 操作按钮区
         btn_frame = tk.Frame(root)
         btn_frame.pack(fill='x', padx=10, pady=(0, 5))
-        ttk.Button(btn_frame, text="手动发送 数字 + 图片", command=self.trigger_send).pack(anchor='w')
+        ttk.Button(btn_frame, text="点我手动发送", command=self.trigger_send).pack(anchor='w')
 
         # Console输出区
         tk.Label(root, text="Console 输出:").pack(anchor='w', padx=10, pady=(5, 0))
         self.console = ScrolledText(root, height=15, state='disabled')
         self.console.pack(fill='both', expand=True, padx=10, pady=(0, 10))
+
+        self.console.tag_config("info", foreground="blue")       # 信息消息
+        self.console.tag_config("warning", foreground="orange")  # 警告消息
+        self.console.tag_config("error", foreground="red", font=("TkDefaultFont", 9, "bold")) # 错误消息，加粗
+        self.console.tag_config("success", foreground="green")   # 成功消息
+        self.console.tag_config("normal", foreground="black")    # 默认黑色文本
     
     def select_qq_exe(self):
         path = filedialog.askopenfilename(filetypes=[("Executable", "*.exe")])
@@ -448,11 +496,31 @@ class FileWatcherApp:
             self.last_mtime = None
             self.log(f"已切换监控路径为：{path}")
 
-    def log(self, message):
+    def log(self, message, level="INFO"): # Added a 'level' parameter with default 'INFO'
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-        full_message = f"[INFO] {timestamp} {message}\n"
+        
+        # Determine the tag based on the message content or provided level
+        tag = "normal" # Default tag
+        if "❌ 错误" in message or "Error" in message or level == "ERROR":
+            tag = "error"
+            formatted_level = "ERROR"
+        elif "⚠️" in message or "Warning" in message or level == "WARNING":
+            tag = "warning"
+            formatted_level = "WARN"
+        elif "✅" in message or "Success" in message or level == "SUCCESS":
+            tag = "success"
+            formatted_level = "SUCCESS"
+        elif "🔍" in message or level == "DEBUG":
+            tag = "info" # Use info color for debug/search messages
+            formatted_level = "DEBUG"
+        else: # Default for regular info messages
+            tag = "info"
+            formatted_level = "INFO"
+
+        full_message = f"[{formatted_level}] {timestamp} {message}\n"
         self.console.configure(state='normal')
-        self.console.insert(tk.END, full_message)
+        # Insert the message with the determined tag
+        self.console.insert(tk.END, full_message, tag) 
         self.console.configure(state='disabled')
         self.console.see(tk.END)
 
@@ -495,6 +563,10 @@ class FileWatcherApp:
         tag_style = self.tag_style_var.get()
         show_span_sum = self.show_span_sum_var.get()
         span_sum_use_circle_style = self.span_sum_use_circle_style_var.get()
+        enable_send_text = self.enable_send_text_var.get()
+        enable_send_images = self.enable_send_images_var.get()
+        enable_send_text = self.enable_send_text_var.get()
+        enable_send_images = self.enable_send_images_var.get()
 
         extracted, latest_code = extract_codes(self.log, file_path, code_count, enable_tag, tag_style, show_span_sum, span_sum_use_circle_style)
         if prefix_text:
@@ -508,7 +580,15 @@ class FileWatcherApp:
         
         img_server_url = self.img_server_url_var.get().strip()
         def do_send():
-            send_message_and_images(self.log, code_from_txt=extracted, exe_path=qq_exe_path, target_titles=target_titles, img_server_url=img_server_url)
+            send_message_and_images(
+                log_func = self.log, 
+                code_from_txt=extracted, 
+                exe_path=qq_exe_path, 
+                target_titles=target_titles, 
+                img_server_url = img_server_url,
+                enable_send_text = enable_send_text, 
+                enable_send_images = enable_send_images
+            )
 
         threading.Thread(target=do_send, daemon=True).start()
 
